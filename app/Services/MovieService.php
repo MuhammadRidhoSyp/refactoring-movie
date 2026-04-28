@@ -2,31 +2,32 @@
 
 namespace App\Services;
 
-use App\Models\Movie;
+use App\Interfaces\MovieRepositoryInterface;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\File;
 
 class MovieService
 {
+    protected $movieRepository;
+
+    public function __construct(MovieRepositoryInterface $movieRepository)
+    {
+        $this->movieRepository = $movieRepository;
+    }
+
     public function getAllMovies($search = null)
     {
-        $query = Movie::latest();
-        if ($search) {
-            $query->where('judul', 'like', '%' . $search . '%')
-                ->orWhere('sinopsis', 'like', '%' . $search . '%');
-        }
-        return $query->paginate(6)->withQueryString();
+        return $this->movieRepository->getAllMovies($search);
     }
 
     public function getMoviesForData()
     {
-        return Movie::latest()->paginate(10);
+        return $this->movieRepository->getMoviesForData();
     }
 
     public function getMovieById($id)
     {
-        // Using find() because detail() used find(), though update() used findOrFail(). We'll use findOrFail for safety where appropriate.
-        return Movie::find($id);
+        return $this->movieRepository->getMovieById($id);
     }
 
     public function createMovie(array $data, $file = null)
@@ -40,12 +41,12 @@ class MovieService
             $data['foto_sampul'] = $fileName;
         }
 
-        return Movie::create($data);
+        return $this->movieRepository->createMovie($data);
     }
 
     public function updateMovie($id, array $data, $file = null)
     {
-        $movie = Movie::findOrFail($id);
+        $movie = $this->movieRepository->getMovieByIdOrFail($id);
 
         if ($file) {
             $randomName = Str::uuid()->toString();
@@ -61,19 +62,17 @@ class MovieService
             $data['foto_sampul'] = $fileName;
         }
 
-        $movie->update($data);
-
-        return $movie;
+        return $this->movieRepository->updateMovie($id, $data);
     }
 
     public function deleteMovie($id)
     {
-        $movie = Movie::findOrFail($id);
+        $movie = $this->movieRepository->getMovieByIdOrFail($id);
 
         if ($movie->foto_sampul && File::exists(public_path('images/' . $movie->foto_sampul))) {
             File::delete(public_path('images/' . $movie->foto_sampul));
         }
 
-        $movie->delete();
+        $this->movieRepository->deleteMovie($id);
     }
 }
