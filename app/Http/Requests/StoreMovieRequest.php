@@ -15,7 +15,7 @@ class StoreMovieRequest extends FormRequest
     public function rules()
     {
         return [
-            'id' => ['required', 'string', 'max:255', Rule::unique('movies', 'id')],
+            'id' => ['required', 'string', 'max:255', \Illuminate\Validation\Rule::unique('movies', 'id')],
             'judul' => 'required|string|max:255',
             'category_id' => 'required|integer|exists:categories,id',
             'sinopsis' => 'required|string',
